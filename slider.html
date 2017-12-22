@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<style>
+	body,div,ul,li,a {
+  margin: 0;
+  padding: 0;
+}
+ul,li {
+  list-style: none;
+}
+.slider-box {
+  position: relative;
+  /*width: 580px;*/
+  width: 600px;
+  height: 400px;
+  overflow: hidden;
+  /* background: #000; */
+}
+.slider {
+  position: relative;
+  width: 400%;
+  height:100%;
+  
+}
+
+.slider li {
+  float: left;
+  width: 180px;
+  height: 100%;
+  margin-right: 20px;
+  background: green;
+}
+.slider li:nth-child(1) 
+{
+	 background: red;
+	}
+.slider li:nth-child(2) 
+{
+	 background: yellow;
+	}
+	.slider li:nth-child(3) 
+{
+	 background: blue;
+	}
+.handle {
+    position: absolute;
+    top: 50%;
+    margin-top: -10px;
+    width: 20px;
+    height: 20px;
+    display: block;
+    background: #eee;
+}
+
+.handle.left {
+  left:0;
+}
+
+.handle.right {
+  right: 20px;
+}
+
+@media only screen and (max-width: 768px) {
+    .handle {display:none;}
+    .slider li 
+    {
+    	width: 580px;
+    }      
+}
+
+</style>
+</head>
+
+	<body>
+		<div class="slider-box" id="sliderBox">
+  <ul class="slider">
+    <li>1</li>
+    <li>2</li>
+    <li>3</li>
+    <li>4</li>
+  </ul>
+  <a href="javascript:void(0)" class="handle left"></a>
+  <a href="javascript:void(0)" class="handle right"></a>
+</div>
+<script src="./jquery.js"></script>
+<script>
+
+var index = 0;
+var item = $('.slider').find('li');
+var itemSum = item.length;
+var itemShowNum = 3;
+var itemWidth = item.width();
+
+$('#sliderBox').on('click', '.right',function(e){
+    index++;
+    if (index > (itemSum - itemShowNum)) {
+    	index--;
+      return;
+    };
+    console.log('e');
+    $('.slider').animate({left: -(itemWidth+20)*index+'px'},600);
+  }).on('click', '.left',function(e){
+    index--;
+    if (index < 0) {
+    	index++;
+      return;
+    }
+    $('.slider').animate({left: -(itemWidth+20)*index+'px'},600);
+  });
+// mobile
+var $el = $('#sliderBox').find('.slider');
+
+var MobileSlide = function($el) {
+    this.init($el);
+    this.bindEvent();
+};
+
+var MobileSlideProto = MobileSlide.prototype;
+
+MobileSlideProto.init = function($el) {
+    this.pageX; //横向手指落点
+    this.pageY; //纵向手指落点    
+    this.move; //滑动的距离
+    
+    this.current = 0; //当前slider对象指针    
+    this.$el = $el; //slider对象集
+    this.itemWidth = this.$el.find('li').width();
+    this.slideGap = 20;
+    this.slideWidth = this.itemWidth + this.slideGap;
+    
+};
+
+MobileSlideProto.bindEvent = function(e) {
+    var self = this;
+    this.$el.on('touchstart', function(e){
+        var touches = e.originalEvent.touches[0];
+        
+        //记录落点
+        self.pageX = touches.pageX;
+        self.pageY = touches.pageY;
+        self.move = 0;
+        
+    }).on('touchmove', function(e){
+        var touches = e.originalEvent.touches[0];
+        var X = touches.pageX - self.pageX;
+        var Y = touches.pageY - self.pageY;        
+        
+        e.preventDefault();
+        e.stopPropagation();
+        if (Math.abs(X) > Math.abs(Y)) {
+            var moveX = X-self.current*(self.slideWidth);
+            self.move = X;            
+            self.moveX(self.$el, moveX);
+        }       
+    }).on('touchend', function(e){
+        e.preventDefault();
+        var minRange = 50;
+        if (self.move < -minRange) return self.next();
+        if (self.move > minRange) return self.prev();
+        //self.reset();
+    }).on('touchcancel', function(e){
+       // self.reset();
+    })
+};
+
+MobileSlideProto.reset = function() {
+   //this.moveX(this.$el, -d*this.slideWidth*this.current);
+};
+
+MobileSlideProto.moveX = function($el, x) {
+    $el && ($el.css('left',  x));
+    //el && (el.style.webkitTransform = 'translate3d(' + x + (unit || 'px') + '0,0)');
+};
+
+MobileSlideProto.next = function() {
+    this.go(this.current + 1);
+};
+
+MobileSlideProto.prev = function() {
+    this.go(this.current - 1);
+};
+
+MobileSlideProto.go = function(i) {
+    var $targetItem = this.$el.children().eq(i);
+    var $curItem = this.$el.children().eq(this.current);
+    var itemSum = this.$el.children().length;
+    
+    if (i<0 || i>=itemSum || i === this.current) {
+        this.moveX(this.$el, -this.slideWidth*this.current);
+        return;
+    };
+
+    this.current = i;
+    this.moveX(this.$el, -this.slideWidth*this.current);
+       
+};
+
+new MobileSlide($el);
+
+
+</script>
+	</body>
+</html>
